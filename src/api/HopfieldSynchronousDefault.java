@@ -44,6 +44,66 @@ public class HopfieldSynchronousDefault implements Hopfield {
         return E * (-1);
     }
 
+    @Override
+    public void executeTest() {
+        for (int i = 0; i < vectorListBiPolar.size(); i++) {
+            System.out.println("########## Badanie nr " + (i + 1) + " ###########");
+            System.out.println("-> Badany wektor V: ");
+            vector = Matrix.createColumnMatrix(vectorListBiPolar.get(i));
+            matrixToString(vector);
+            System.out.println("!--- Badanie punktu w trybie synchronicznym ---!");
+            check = true;
+            input = vector;
+            stepCounter = 1;
+            executeStep(matrix, input, check, stepCounter, energyList);
+        }
+    }
+
+    @Override
+    public void executeStep(Matrix matrix, Matrix input, boolean check, int stepCounter, List<Double> energyList) {
+        while (check) {
+            U = MatrixMath.multiply(matrix, input);
+            System.out.println("\n******** Krok nr " + stepCounter + " ********");
+            System.out.println("-> Potencjał wejściowy U");
+            matrixToString(U);
+            double a1 = bipolarCheck(U.get(0, 0));
+            double a3 = bipolarCheck(U.get(2, 0));
+            double a2 = bipolarCheck(U.get(1, 0));
+            output = Matrix.createColumnMatrix(new double[]{a1, a2, a3});
+
+            System.out.println("-> Potencjał wyjściowy V:");
+            matrixToString(output);
+
+            energyList.add(calculateEnergy(matrix, input, output));
+            System.out.println("E(" + stepCounter + ") = " + calculateEnergy(matrix, input, output));
+            if (input.equals(output)) {
+                System.out.println("\n!-- Sieć ustabilizowała się! --!");
+                System.out.println("-> V" + (stepCounter - 1) + ":");
+                matrixToString(input);
+                check = false;
+            }
+            if (energyList.size() >= 2) {
+                int listsize = energyList.size();
+                if (0 == energyList.get(listsize - 1) - energyList.get(listsize - 2)) {
+                    System.out.println("\n!-- Oscylacja dwypunktowa --!");
+                    System.out.println("Punkty oscylacji:");
+                    System.out.println("-> V" + (stepCounter - 1) + ":");
+                    matrixToString(input);
+                    System.out.println("-> V" + (stepCounter) + ":");
+                    matrixToString(output);
+                    energyList.clear();
+                    check = false;
+                }
+            }
+
+            if (stepCounter > 9) {
+                System.out.println("\n!-- Osiągnięto maksymalną ilość kroków sieć się nie ustabilizoała się --!");
+                check = false;
+            }
+            input = output;
+            stepCounter++;
+        }
+    }
 
     @Override
     public void matrixToString(Matrix M) {
