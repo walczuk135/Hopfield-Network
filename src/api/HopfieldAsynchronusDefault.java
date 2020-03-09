@@ -48,6 +48,60 @@ public class HopfieldAsynchronusDefault implements Hopfield {
     }
 
     @Override
+    public void executeTest() {
+        System.out.println("Macierz W:");
+        matrixToString(matrix);
+
+        for (int i = 0; i < vectorListBiPolar.size(); i++) {
+            System.out.println("########## Badanie nr " + (i + 1) + " ###########");
+            System.out.println("-> Badany wektor V: ");
+            vector = Matrix.createColumnMatrix(vectorListBiPolar.get(i));
+            matrixToString(vector);
+            System.out.println("!--- Badanie punktu w trybie asynchronicznym ---!");
+            check = true;
+            input = vector;
+            stepCounter = 0;
+            repCounter = 0;
+            executeStep(matrix, input, check, stepCounter, energyList);
+        }
+    }
+
+    @Override
+    public void executeStep(Matrix matrix, Matrix input, boolean check, int stepCounter, List<Double> energyList) {
+        while (check) {
+            U = multiplyAsynchronous(stepCounter % 3, matrix, input);
+            System.out.println("\n******** Krok nr " + (stepCounter + 1) + " ********");
+            System.out.println("-> Potencjał wejściowy U");
+            matrixUToString(U, stepCounter % 3);
+
+            output = changeToBiPolar(stepCounter % 3, U);
+
+            System.out.println("-> Potencjał wyjściowy V:");
+            System.out.println(matrixNormalToString(output));
+            energyList.add(calculateEnergyAsynchronousMode(matrix, output));
+            System.out.println("E(" + output.get(0, 0) + output.get(1, 0) + output.get(2, 0) + ") = " + calculateEnergyAsynchronousMode(matrix, output));
+            if (input.equals(output)) {
+                repCounter++;
+            } else{
+                repCounter = 0;
+            }
+
+            if (repCounter >= 3) {
+                System.out.println("Siec sie ustabilizowala");
+                check = false;
+            }
+
+            input = output;
+            stepCounter++;
+
+            if (stepCounter > 24) {
+                System.out.println("\n!-- Osiągnięto maksymalną ilość kroków sieć się nie ustabilizoała się --!");
+                check = false;
+            }
+        }
+    }
+
+    @Override
     public void matrixToString(Matrix M) {
         matrixUToString(M, stepCounter);
     }
